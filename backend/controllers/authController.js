@@ -1,13 +1,6 @@
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import User from "../models/User.js";
-import twilio from "twilio";
 import generateToken from "../utils/generateToken.js";
-
-// Twilio client
-const client = new twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
 
 // ==================== REGISTER ====================
 export const register = async (req, res) => {
@@ -36,11 +29,9 @@ export const register = async (req, res) => {
     });
 
     // Step 5: send OTP
-    await client.messages.create({
-      body: `Your verification code is ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
+    console.log(`Your verification code is ${otp}`);
+    console.log(`From: ${process.env.TWILIO_PHONE_NUMBER}`);
+    console.log(`To: ${phone}`);
 
     res.status(201).json({ msg: "OTP sent successfully", userId: user._id });
   } catch (error) {

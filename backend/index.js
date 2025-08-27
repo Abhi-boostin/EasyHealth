@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
-
+import chatRoutes from "./routes/chatRoutes.js";
 dotenv.config();
 
 // MADE THE APP
@@ -30,6 +30,9 @@ app.get("/api", (req, res) => {
 
 // login api forwarding
 app.use("/api/user", authRoutes);
+
+//chat api forwarding
+app.use("/api/chat",chatRoutes);
 
 // start server
 app.listen(PORT, () => {
