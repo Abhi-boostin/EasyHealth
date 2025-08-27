@@ -19,6 +19,6 @@ export const sendMessage = async (req, res) => {
     });
   } catch (error) {
     console.error("Chat Controller Error:", error);
-    return res.status(500).json({ error: "Something idk man" });
+    return res.status(500).json({ error: "Something went wrong" });
   }
 };
