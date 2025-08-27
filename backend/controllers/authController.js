@@ -14,27 +14,28 @@ export const register = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
-    const existingUser = await User.findOne({ phone });
-    if (existingUser) {
+    // Step 1: check if user already exists
+    const userExists = await User.exists({ phone });
+    if (userExists) {
       return res.status(400).json({ msg: "User already exists" });
     }
 
+    // Step 2: hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Step 3: generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedOtp = await bcrypt.hash(otp, salt);
-
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
+    // Step 4: create user
     const user = await User.create({
       phone,
       password: hashedPassword,
-      otp: hashedOtp,
+      otp, // direct otp save
       otpExpiresAt: otpExpiry,
     });
 
+    // Step 5: send OTP
     await client.messages.create({
       body: `Your verification code is ${otp}`,
       from: process.env.TWILIO_PHONE_NUMBER,
@@ -53,6 +54,7 @@ export const verifyOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
 
+    // yaha full user chaiye, isliye findOne
     const user = await User.findOne({ phone });
     if (!user) return res.status(404).json({ msg: "User not found" });
 
@@ -64,8 +66,7 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ msg: "OTP expired" });
     }
 
-    const isMatch = await bcrypt.compare(otp, user.otp);
-    if (!isMatch) {
+    if (otp !== user.otp) {
       return res.status(400).json({ msg: "Invalid OTP" });
     }
 
@@ -86,6 +87,7 @@ export const login = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
+    // yaha bhi full user chaiye, so findOne
     const user = await User.findOne({ phone });
     if (!user) return res.status(404).json({ msg: "User not found" });
 
@@ -101,10 +103,7 @@ export const login = async (req, res) => {
     res.json({
       msg: "Login successful",
       token,
-      user: { id: user._iimport bcrypt from "bcryptjs";
-        import User from "../models/User.js";
-        import twilio from "twilio";
-        import generateToken from "../utils/generateToken.js";d, phone: user.phone },
+      user: { id: user._id, phone: user.phone },
     });
   } catch (error) {
     console.error(error);
