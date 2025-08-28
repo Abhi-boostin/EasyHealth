@@ -8,6 +8,7 @@ export default function Dashboard() {
         <div className="flex flex-col gap-3">
           <Link to="/login" className="w-full bg-indigo-500 hover:bg-indigo-600 transition text-white py-3 rounded-xl text-center">Login</Link>
           <Link to="/register" className="w-full bg-white/10 hover:bg-white/20 transition text-white py-3 rounded-xl text-center border border-white/10">Register</Link>
+          <Link to="/chat" className="w-full bg-white/10 hover:bg-white/20 transition text-white py-3 rounded-xl text-center border border-white/10">Open Chat</Link>
         </div>
       </div>
     </div>
