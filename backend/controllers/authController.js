@@ -1,6 +1,12 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
+import twilio from "twilio";
+
+const client = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 
 // ==================== REGISTER ====================
 export const register = async (req, res) => {
@@ -24,18 +30,20 @@ export const register = async (req, res) => {
     const user = await User.create({
       phone,
       password: hashedPassword,
-      otp, // direct otp save
+      otp,
       otpExpiresAt: otpExpiry,
     });
 
-    // Step 5: send OTP
-    console.log(`Your verification code is ${otp}`);
-    console.log(`From: ${process.env.TWILIO_PHONE_NUMBER}`);
-    console.log(`To: ${phone}`);
+    // Step 5: send OTP using Twilio
+    await client.messages.create({
+      body: `Your EasyHealth verification code is ${otp}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phone,
+    });
 
     res.status(201).json({ msg: "OTP sent successfully", userId: user._id });
   } catch (error) {
-    console.error(error);
+    console.error("Register Error:", error.message);
     res.status(500).json({ msg: "Server error" });
   }
 };
@@ -45,7 +53,6 @@ export const verifyOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
 
-    // yaha full user chaiye, isliye findOne
     const user = await User.findOne({ phone });
     if (!user) return res.status(404).json({ msg: "User not found" });
 
@@ -68,7 +75,7 @@ export const verifyOtp = async (req, res) => {
 
     res.json({ msg: "User verified successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Verify OTP Error:", error.message);
     res.status(500).json({ msg: "Server error" });
   }
 };
@@ -78,7 +85,6 @@ export const login = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
-    // yaha bhi full user chaiye, so findOne
     const user = await User.findOne({ phone });
     if (!user) return res.status(404).json({ msg: "User not found" });
 
@@ -97,7 +103,7 @@ export const login = async (req, res) => {
       user: { id: user._id, phone: user.phone },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login Error:", error.message);
     res.status(500).json({ msg: "Server error" });
   }
 };
