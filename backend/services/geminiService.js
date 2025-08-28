@@ -1,36 +1,46 @@
 // services/geminiService.js
+import dotenv from "dotenv";
+dotenv.config();
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const getGeminiResponse = async (message, imageBuffer = null, mimeType = null) => {
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// ⚡ Flash model
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+export async function getGeminiResponse(userMessage, imageBuffer = null, mimeType = null) {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const baseInstruction = `
+      You are EasyHealth AI, a trusted digital healthcare assistant.
+      - Be empathetic, supportive, and clear.
+      - Provide general health guidance, lifestyle tips, and wellness advice.
+      - Avoid giving a medical diagnosis. If needed, suggest consulting a doctor.
+      - If asked non-health questions, tell them that you're a healthcare professional and give a single sentence asnwer about the question anyways.
+      - Always sound professional but caring.
+      
+      User: ${userMessage?.trim() || ""}
+      Assistant:
+    `;
 
-    // EasyHealth persona prompt
-    let prompt = `
-You are EasyHealth, a helpful healthcare assistant.
-Your main job is to provide **health-care tips and guidance** using trusted medical knowledge.
-If the user asks about **non-health-care topics**, politely say:
-“I am a healthcare professional bot, but I can still answer briefly.”
-Keep non-health-care replies short and concise.
-Always stay professional, empathetic, and clear in healthcare advice.
-User: ${message}
-Assistant:
-    `.trim();
-
-    // Input object for Gemini
-    let input = { text: prompt };
-
-    // Agar image hai, add karo
+    let result;
     if (imageBuffer && mimeType) {
-      input.image = { buffer: imageBuffer, type: mimeType };
+      result = await model.generateContent([
+        { text: baseInstruction },
+        {
+          inlineData: {
+            data: imageBuffer.toString("base64"),
+            mimeType,
+          },
+        },
+      ]);
+    } else {
+      result = await model.generateContent(baseInstruction);
     }
 
-    const result = await model.generateContent(input);
-
-    return result.response.text();
+    return result.response.text().trim();
   } catch (error) {
     console.error("Gemini API Error:", error);
     throw new Error("Failed to fetch response from Gemini");
   }
-};
+}
