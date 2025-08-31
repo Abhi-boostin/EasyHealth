@@ -1,12 +1,12 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
-import twilio from "twilio";
+// import twilio from "twilio";
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+// const client = twilio(
+//   process.env.TWILIO_ACCOUNT_SID,
+//   process.env.TWILIO_AUTH_TOKEN
+// );
 
 // ==================== REGISTER ====================
 export const register = async (req, res) => {
@@ -35,11 +35,14 @@ export const register = async (req, res) => {
     });
 
     // Step 5: send OTP using Twilio
-    await client.messages.create({
-      body: `Your EasyHealth verification code is ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
+    // await client.messages.create({
+    //   body: `Your EasyHealth verification code is ${otp}`,
+    //   from: process.env.TWILIO_PHONE_NUMBER,
+    //   to: phone,
+    // });
+
+    // Log OTP to console instead of sending SMS
+    console.log(`OTP for ${phone}: ${otp}`);
 
     res.status(201).json({ msg: "OTP sent successfully", userId: user._id });
   } catch (error) {

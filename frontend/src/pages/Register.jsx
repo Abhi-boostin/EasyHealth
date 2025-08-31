@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../lib/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [phone, setPhone] = useState("");
@@ -9,91 +9,157 @@ export default function Register() {
   const [otp, setOtp] = useState("");
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const register = async (e) => {
+  const validatePhone = (phone) => {
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validatePassword = (password) => {
+    return password.length >= 6;
+  };
+
+  const sendOtp = async (e) => {
     e.preventDefault();
-    setErr(""); setMsg("");
+    setErr(""); 
+    setMsg("");
+    
+    if (!validatePhone(phone)) {
+      setErr("Please enter a valid phone number (e.g., +911234567890)");
+      return;
+    }
+    
+    if (!validatePassword(password)) {
+      setErr("Password must be at least 6 characters long");
+      return;
+    }
+
+    setLoading(true);
     try {
       const { data } = await api.post("/api/user/register", { phone, password });
       setOtpSent(true);
-      setMsg(data?.msg || "OTP sent");
+      setMsg(data?.msg || "OTP sent successfully! Check console for OTP.");
     } catch (error) {
-      setErr(error?.response?.data?.msg || "Register failed");
+      setErr(error?.response?.data?.msg || "Failed to send OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const verify = async (e) => {
+  const verifyOtp = async (e) => {
     e.preventDefault();
-    setErr(""); setMsg("");
+    setErr(""); 
+    setMsg("");
+    
+    if (!otp || otp.length !== 6) {
+      setErr("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setLoading(true);
     try {
       const { data } = await api.post("/api/user/verify-otp", { phone, otp });
-      setMsg(data?.msg || "Verified");
+      setMsg(data?.msg || "OTP verified successfully!");
+      
+      // Store user data for chat
+      localStorage.setItem("eh_user_phone", phone);
+      localStorage.setItem("eh_user_password", password);
+      
+      // Redirect to chat after a short delay
+      setTimeout(() => {
+        navigate("/chat");
+      }, 1500);
+      
     } catch (error) {
-      setErr(error?.response?.data?.msg || "Verify failed");
+      setErr(error?.response?.data?.msg || "OTP verification failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0B1020] text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0E1430] rounded-2xl border border-white/10 p-8 shadow-[0_0_100px_-20px_rgba(99,102,241,.35)]">
-        <h2 className="text-xl font-medium text-center mb-6">Create your account</h2>
+    <div className="min-h-screen w-full bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-gray-900 border-2 border-white p-6 rounded-none">
+          <h2 className="text-center text-xl font-mono text-white mb-6 tracking-wider">
+            CREATE ACCOUNT
+          </h2>
 
-        {!otpSent ? (
-          <form onSubmit={register} className="space-y-4">
-            <div>
-              <label className="block text-sm mb-1">Phone</label>
-              <input
-                type="tel"
-                placeholder="+911234567890"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-indigo-400"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-indigo-400"
-                required
-              />
-            </div>
-            {err ? <div className="text-red-400 text-sm">{err}</div> : null}
-            {msg ? <div className="text-green-400 text-sm">{msg}</div> : null}
-            <button className="w-full bg-indigo-500 hover:bg-indigo-600 transition text-white py-3 rounded-xl">
-              Send OTP
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={verify} className="space-y-4">
-            <div>
-              <label className="block text-sm mb-1">Enter OTP</label>
-              <input
-                type="text"
-                placeholder="123456"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full rounded-xl bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-indigo-400"
-                required
-              />
-            </div>
-            {err ? <div className="text-red-400 text-sm">{err}</div> : null}
-            {msg ? <div className="text-green-400 text-sm">{msg}</div> : null}
-            <button className="w-full bg-indigo-500 hover:bg-indigo-600 transition text-white py-3 rounded-xl">
-              Verify
-            </button>
-          </form>
-        )}
+          {!otpSent ? (
+            <form onSubmit={sendOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-mono text-white mb-2">PHONE NUMBER</label>
+                <input
+                  type="tel"
+                  placeholder="+911234567890"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-black text-white border-2 border-white px-3 py-2 font-mono focus:outline-none focus:border-gray-400"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-mono text-white mb-2">PASSWORD</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-black text-white border-2 border-white px-3 py-2 font-mono focus:outline-none focus:border-gray-400"
+                  required
+                />
+              </div>
+              
+              {err ? <div className="text-red-400 text-sm font-mono border border-red-400 p-2">{err}</div> : null}
+              {msg ? <div className="text-green-400 text-sm font-mono border border-green-400 p-2">{msg}</div> : null}
+              
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-white text-black py-3 font-mono border-2 border-white hover:bg-black hover:text-white transition-all duration-200 disabled:opacity-50"
+              >
+                {loading ? "SENDING..." : "SEND OTP"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={verifyOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-mono text-white mb-2">ENTER OTP</label>
+                <input
+                  type="text"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full bg-black text-white border-2 border-white px-3 py-2 font-mono focus:outline-none focus:border-gray-400 text-center text-lg tracking-widest"
+                  required
+                  maxLength={6}
+                />
+              </div>
+              
+              {err ? <div className="text-red-400 text-sm font-mono border border-red-400 p-2">{err}</div> : null}
+              {msg ? <div className="text-green-400 text-sm font-mono border border-green-400 p-2">{msg}</div> : null}
+              
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-white text-black py-3 font-mono border-2 border-white hover:bg-black hover:text-white transition-all duration-200 disabled:opacity-50"
+              >
+                {loading ? "VERIFYING..." : "VERIFY OTP"}
+              </button>
+            </form>
+          )}
 
-        <div className="mt-6 text-center text-sm text-white/60">
-          Already have an account?{" "}
-          <Link className="text-indigo-400 hover:underline" to="/login">
-            Sign in
-          </Link>
+          <div className="mt-6 text-center">
+            <Link 
+              to="/login" 
+              className="text-white font-mono hover:text-gray-300 transition-colors"
+            >
+              ← BACK TO LOGIN
+            </Link>
+          </div>
         </div>
       </div>
     </div>
