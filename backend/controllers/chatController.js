@@ -2,17 +2,31 @@ import { getGeminiResponse } from "../services/geminiService.js";
 import { pdfToImages } from "../utils/pdfUtils.js";
 import User from "../models/User.js";
 
+// Phone number formatting function
+const formatPhoneNumber = (phone) => {
+  if (!phone) return null;
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  if (!cleaned.startsWith('+')) {
+    return `+91${cleaned}`;
+  }
+  return cleaned;
+};
+
 export const handleChat = async (req, res) => {
   try {
-    const { message, phone } = req.body;  // <-- phone added
+    const { message, phone } = req.body;
     const file = req.file;
 
     if (!message && !file) {
       return res.status(400).json({ error: "Message or File is required" });
     }
 
-    // ✅ fetch user by phone to get location
-    const user = await User.findOne({ phone });
+    // Format phone number to match database format
+    const formattedPhone = formatPhoneNumber(phone);
+    
+    // Fetch user by formatted phone to get location
+    const user = await User.findOne({ phone: formattedPhone });
+    
     const locationInfo = user?.location
       ? `User is at ${user.location.address} (lat: ${user.location.latitude}, long: ${user.location.longitude}).`
       : "User location not provided.";
@@ -21,7 +35,7 @@ export const handleChat = async (req, res) => {
 
     if (file) {
       if (file.mimetype === "application/pdf") {
-        // ✅ convert PDF -> images
+        // Convert PDF to images
         const images = await pdfToImages(file.buffer);
 
         if (images.length > 16) {
@@ -34,24 +48,32 @@ export const handleChat = async (req, res) => {
           });
         }
 
-        // Gemini ko multiple images bhejna with location
         botReply = await getGeminiResponse(
-          `${message || ""}\n\nLocation Context: ${locationInfo}`, 
-          null, 
-          null, 
-          images
+          message || "",
+          null,
+          null,
+          images,
+          locationInfo
         );
       } else {
-        // Agar image hai with location
+        // Single image
         botReply = await getGeminiResponse(
-          `${message || ""}\n\nLocation Context: ${locationInfo}`, 
+          message || "", 
           file.buffer, 
-          file.mimetype
+          file.mimetype, 
+          [],
+          locationInfo
         );
       }
     } else {
-      // Sirf text with location
-      botReply = await getGeminiResponse(`${message}\n\nLocation Context: ${locationInfo}`);
+      // Text only
+      botReply = await getGeminiResponse(
+        message || "",
+        null,
+        null,
+        [],
+        locationInfo
+      );
     }
 
     return res.json({

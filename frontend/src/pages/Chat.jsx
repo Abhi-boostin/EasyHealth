@@ -82,23 +82,18 @@ export default function Chat() {
 
   const sendLocationToBackend = async (latitude, longitude, address) => {
     try {
-      const token = localStorage.getItem("eh_token");
-      if (!token) {
-        console.error("No authentication token found");
+      const phone = localStorage.getItem("eh_user_phone");
+      if (!phone) {
         return false;
       }
 
       const response = await api.post("/api/location", {
         latitude,
         longitude,
-        address
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        address,
+        phone
       });
 
-      console.log("Location saved successfully:", response.data);
       return true;
     } catch (error) {
       console.error("Failed to send location to backend:", error);
@@ -124,10 +119,9 @@ export default function Chat() {
     setError("");
 
     try {
-      // ✅ FormData for backend (supports text + media)
       const formData = new FormData();
       formData.append("message", userMsg.text);
-      formData.append("phone", localStorage.getItem("eh_user_phone")); // Add phone number
+      formData.append("phone", localStorage.getItem("eh_user_phone"));
       if(mediaFile) formData.append("file", mediaFile);
 
       const { data } = await api.post("/api/chat/send", formData, {

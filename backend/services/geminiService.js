@@ -9,8 +9,22 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // ⚡ Flash model
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-export async function getGeminiResponse(userMessage, imageBuffer = null, mimeType = null, multipleImages = []) {
+/**
+ * userMessage: string - user's text input
+ * imageBuffer: Buffer - single image file
+ * mimeType: string - MIME type of single image
+ * multipleImages: Array - for PDF pages or multiple image uploads [{ inlineData: { data, mimeType } }]
+ * locationInfo: string - formatted user location to help suggest nearby hospitals
+ */
+export async function getGeminiResponse(
+  userMessage,
+  imageBuffer = null,
+  mimeType = null,
+  multipleImages = [],
+  locationInfo = "User location not provided"
+) {
   try {
+    // Combine base instruction with location info
     const baseInstruction = `
 You are EasyHealth AI, a trusted digital healthcare assistant.
 
@@ -21,13 +35,7 @@ You are EasyHealth AI, a trusted digital healthcare assistant.
 - Be empathetic, clear, and supportive.
 
 **User Location Information (if available):**
-- Use the user's location to suggest the nearest hospitals or clinics where they can see a doctor relevant to the findings.
-- Include for each hospital:
-    - Hospital/Clinic Name
-    - Specialty/Doctor Name
-    - Visiting Hours / Timings
-    - Contact number
-    - Optional: Address if useful
+${locationInfo}
 
 **Important Boundaries:**
 - Always remind: "This helps you understand your medical info but is not a replacement for professional advice."
@@ -55,7 +63,7 @@ Nearby Medical Assistance:
    - Contact: +91 9123456780
    - Address: Muradnagar, Uttar Pradesh
 
-**User Message & Medical Info:** ${userMessage?.trim() || ""}
+**User Medical Message:** ${userMessage?.trim() || ""}
 
 Assistant:
 `;
@@ -63,11 +71,13 @@ Assistant:
     let result;
 
     if (multipleImages.length > 0) {
+      // PDF pages or multiple images
       result = await model.generateContent([
         { text: baseInstruction },
         ...multipleImages,
       ]);
     } else if (imageBuffer && mimeType) {
+      // Single image
       result = await model.generateContent([
         { text: baseInstruction },
         {
@@ -78,6 +88,7 @@ Assistant:
         },
       ]);
     } else {
+      // Text only
       result = await model.generateContent(baseInstruction);
     }
 

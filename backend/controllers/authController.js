@@ -8,7 +8,9 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
+// Phone number formatting function
 const formatPhoneNumber = (phone) => {
+  if (!phone) return null;
   const cleaned = phone.replace(/[\s\-\(\)]/g, '');
   if (!cleaned.startsWith('+')) {
     return `+91${cleaned}`;
@@ -33,22 +35,20 @@ export const register = async (req, res) => {
       otpExpiresAt: otpExpiry,
       isVerified: false
     });
-    console.log(otp);
 
     await client.messages.create({
       body: `Your verification code is ${otp}`,
       from: process.env.TWILIO_PHONE_NUMBER,
-      to: formattedPhone
+      to: formattedPhone,
     });
 
     res.status(201).json({ 
-      success: true,
-      msg: "OTP sent", 
+      success: true, 
+      msg: "OTP sent successfully", 
       userId: user._id 
     });
-
   } catch (error) {
-    console.error(error);
+    console.error("Register Error:", error.message);
     res.status(500).json({ msg: "Server error" });
   }
 };
@@ -103,7 +103,7 @@ export const login = async (req, res) => {
       token,
       user: { 
         id: user._id, 
-        phone: user.phone 
+        phone: user.phone // This will be the formatted phone from database
       }
     });
 

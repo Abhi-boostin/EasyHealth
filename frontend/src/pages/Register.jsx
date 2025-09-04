@@ -21,13 +21,21 @@ export default function Register() {
     return password.length >= 6;
   };
 
+  const formatPhoneNumber = (phone) => {
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    if (!cleaned.startsWith('+')) {
+      return `+91${cleaned}`;
+    }
+    return cleaned;
+  };
+
   const sendOtp = async (e) => {
     e.preventDefault();
     setErr(""); 
     setMsg("");
     
     if (!validatePhone(phone)) {
-      setErr("Please enter a valid phone number (e.g., +911234567890)");
+      setErr("Please enter a valid phone number (e.g., +917017397663 or 7017397663)");
       return;
     }
     
@@ -38,7 +46,11 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const { data } = await api.post("/api/user/register", { phone, password });
+      const formattedPhone = formatPhoneNumber(phone);
+      const { data } = await api.post("/api/user/register", { 
+        phone: formattedPhone, 
+        password 
+      });
       setOtpSent(true);
       setMsg(data?.msg || "OTP sent successfully! Check console for OTP.");
     } catch (error) {
@@ -60,11 +72,15 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const { data } = await api.post("/api/user/verify-otp", { phone, otp });
+      const formattedPhone = formatPhoneNumber(phone);
+      const { data } = await api.post("/api/user/verify-otp", { 
+        phone: formattedPhone, 
+        otp 
+      });
       setMsg(data?.msg || "OTP verified successfully!");
       
       // Store user data for chat
-      localStorage.setItem("eh_user_phone", phone);
+      localStorage.setItem("eh_user_phone", formattedPhone); // Store formatted phone
       localStorage.setItem("eh_user_password", password);
       
       // Redirect to chat after a short delay

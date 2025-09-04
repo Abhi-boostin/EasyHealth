@@ -16,8 +16,9 @@ export default function Login() {
     try {
       const { data } = await api.post("/api/user/login", { phone, password });
       localStorage.setItem("eh_token", data.token);
-      localStorage.setItem("eh_user_phone", phone);
+      localStorage.setItem("eh_user_phone", data.user.phone); // Store the formatted phone from backend
       localStorage.setItem("eh_user_password", password);
+      localStorage.setItem("eh_user_id", data.user.id);
       
       // Redirect to chat after successful login
       setTimeout(() => {
