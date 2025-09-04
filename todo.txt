@@ -1,0 +1,2 @@
+multiple images logic send array of images 
+currently we have only one image and one pdf
