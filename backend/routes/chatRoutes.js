@@ -7,6 +7,6 @@ import upload from "../middlewares/uploadMiddleware.js"; // multer middleware
 const router = express.Router();
 
 // Single route for text OR image + text
-router.post("/send",upload.single("image"), handleChat);
+router.post("/send",upload.single("file"), handleChat);
 
 export default router;
