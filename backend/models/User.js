@@ -21,6 +21,24 @@ const userSchema = new mongoose.Schema(
     otpExpiresAt: {
       type: Date, // OTP expiry time
     },
+    location: {
+      latitude: {
+        type: Number,
+        required: false,
+      },
+      longitude: {
+        type: Number,
+        required: false,
+      },
+      address: {
+        type: String,
+        required: false,
+      },
+      lastUpdated: {
+        type: Date,
+        required: false,
+      }
+    }
   },
   { timestamps: true }
 );

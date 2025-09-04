@@ -1,14 +1,21 @@
 import { getGeminiResponse } from "../services/geminiService.js";
-import { pdfToImages } from "../utils/pdfUtils.js"; // ✅ ye naya helper banayenge
+import { pdfToImages } from "../utils/pdfUtils.js";
+import User from "../models/User.js";
 
 export const handleChat = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, phone } = req.body;  // <-- phone added
     const file = req.file;
 
     if (!message && !file) {
       return res.status(400).json({ error: "Message or File is required" });
     }
+
+    // ✅ fetch user by phone to get location
+    const user = await User.findOne({ phone });
+    const locationInfo = user?.location
+      ? `User is at ${user.location.address} (lat: ${user.location.latitude}, long: ${user.location.longitude}).`
+      : "User location not provided.";
 
     let botReply;
 
@@ -27,15 +34,24 @@ export const handleChat = async (req, res) => {
           });
         }
 
-        // Gemini ko multiple images bhejna
-        botReply = await getGeminiResponse(message || "", null, null, images);
+        // Gemini ko multiple images bhejna with location
+        botReply = await getGeminiResponse(
+          `${message || ""}\n\nLocation Context: ${locationInfo}`, 
+          null, 
+          null, 
+          images
+        );
       } else {
-        // Agar image hai
-        botReply = await getGeminiResponse(message || "", file.buffer, file.mimetype);
+        // Agar image hai with location
+        botReply = await getGeminiResponse(
+          `${message || ""}\n\nLocation Context: ${locationInfo}`, 
+          file.buffer, 
+          file.mimetype
+        );
       }
     } else {
-      // Sirf text
-      botReply = await getGeminiResponse(message);
+      // Sirf text with location
+      botReply = await getGeminiResponse(`${message}\n\nLocation Context: ${locationInfo}`);
     }
 
     return res.json({

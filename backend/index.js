@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import locationRoutes from "./routes/locationRoutes.js";
 dotenv.config();
 
 // MADE THE APP
@@ -32,7 +33,10 @@ app.get("/api", (req, res) => {
 app.use("/api/user", authRoutes);
 
 //chat api forwarding
-app.use("/api/chat",chatRoutes);
+app.use("/api/chat", chatRoutes);
+
+// location api forwarding
+app.use("/api/location", locationRoutes);
 
 // start server
 app.listen(PORT, () => {

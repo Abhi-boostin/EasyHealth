@@ -1,0 +1,79 @@
+{
+  "project": "EasyHealth Backend",
+  "techStack": ["Node.js", "Express", "MongoDB", "Multer", "Twilio", "Google Gemini API"],
+  "features": [
+    {
+      "feature": "User Authentication",
+      "flow": [
+        "Register: User provides phone and password",
+        "Check if user exists in MongoDB",
+        "Hash password using bcrypt",
+        "Generate OTP and expiry (5 min)",
+        "Save user with OTP in DB",
+        "Send OTP via console log / Twilio",
+        "Verify OTP: User submits phone + OTP, check expiry and match, mark user as verified",
+        "Login: User provides phone + password, check verified, compare password, generate JWT token"
+      ]
+    },
+    {
+      "feature": "Chat with AI",
+      "flow": [
+        "Single endpoint /send handles text, image, or PDF",
+        "Multer middleware used for file upload, memoryStorage, max 5MB",
+        "File filter updated to accept images and PDFs",
+        "Controller 'handleChat' checks:",
+        "  - If file is PDF -> convert PDF pages to images using pdf-to-png-converter utility",
+        "  - If PDF has more than 16 pages -> send warning, suggest doctor visit",
+        "  - If file is image -> send image buffer directly",
+        "  - If only text -> send text only",
+        "Controller sends processed input to 'getGeminiResponse'"
+      ]
+    },
+    {
+      "feature": "Gemini AI Integration",
+      "flow": [
+        "Uses @google/generative-ai package",
+        "Flash model 'gemini-1.5-flash' (faster + cheaper)",
+        "getGeminiResponse function receives:",
+        "  - userMessage (text)",
+        "  - imageBuffer + mimeType (for single image)",
+        "  - multipleImages array (for PDF pages converted to images)",
+        "Builds prompt with EasyHealth persona instructions:",
+        "  - Empathetic, clear, professional, caring",
+        "  - Explains medical terminology",
+        "  - Highlights urgent conditions",
+        "  - Non-health questions answered briefly",
+        "If image(s) provided, sends as inlineData (base64 + mimeType) along with text prompt",
+        "Returns trimmed text response from Gemini"
+      ]
+    },
+    {
+      "feature": "Utilities",
+      "flow": [
+        "pdfToImages utility:",
+        "  - Uses pdf-to-png-converter package",
+        "  - Converts each PDF page to PNG image",
+        "  - Returns array of objects: { inlineData: { data: base64, mimeType: 'image/png' } }"
+      ]
+    },
+    {
+      "feature": "Routes",
+      "flow": [
+        "POST /send",
+        "  - Auth middleware optional if needed",
+        "  - Multer middleware handles single file upload ('image' field)",
+        "  - Calls handleChat controller",
+        "  - Accepts: text only, image only, PDF, or text + file"
+      ]
+    },
+    {
+      "notes": [
+        "Gemini API key stored in .env (GEMINI_API_KEY)",
+        "Twilio credentials stored in .env for OTP sending",
+        "JWT_SECRET used for login token generation",
+        "PDF pages limit: 16, otherwise prompt user to consult doctor",
+        "All responses trimmed and sent in JSON: { success, userMessage, botReply, file }"
+      ]
+    }
+  ]
+}
