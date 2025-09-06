@@ -10,6 +10,7 @@ export default function Register() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [displayOtp, setDisplayOtp] = useState("");
   const navigate = useNavigate();
 
   const validatePhone = (phone) => {
@@ -19,14 +20,6 @@ export default function Register() {
 
   const validatePassword = (password) => {
     return password.length >= 6;
-  };
-
-  const formatPhoneNumber = (phone) => {
-    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
-    if (!cleaned.startsWith('+')) {
-      return `+91${cleaned}`;
-    }
-    return cleaned;
   };
 
   const sendOtp = async (e) => {
@@ -52,12 +45,21 @@ export default function Register() {
         password 
       });
       setOtpSent(true);
-      setMsg(data?.msg || "OTP sent successfully! Check console for OTP.");
+      setDisplayOtp(data.otp); // Store OTP to display
+      setMsg(data.message || "OTP sent successfully! Check the OTP below.");
     } catch (error) {
       setErr(error?.response?.data?.msg || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatPhoneNumber = (phone) => {
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    if (!cleaned.startsWith('+')) {
+      return `+91${cleaned}`;
+    }
+    return cleaned;
   };
 
   const verifyOtp = async (e) => {
@@ -80,7 +82,7 @@ export default function Register() {
       setMsg(data?.msg || "OTP verified successfully!");
       
       // Store user data for chat
-      localStorage.setItem("eh_user_phone", formattedPhone); // Store formatted phone
+      localStorage.setItem("eh_user_phone", formattedPhone);
       localStorage.setItem("eh_user_password", password);
       
       // Redirect to chat after a short delay
@@ -109,7 +111,7 @@ export default function Register() {
                 <label className="block text-sm font-mono text-white mb-2">PHONE NUMBER</label>
                 <input
                   type="tel"
-                  placeholder="+911234567890"
+                  placeholder="+917017397663"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full bg-black text-white border-2 border-white px-3 py-2 font-mono focus:outline-none focus:border-gray-400"
@@ -142,6 +144,24 @@ export default function Register() {
             </form>
           ) : (
             <form onSubmit={verifyOtp} className="space-y-4">
+              {/* OTP Display Box */}
+              <div className="bg-yellow-900 border-2 border-yellow-400 p-4 mb-4">
+                <div className="text-center">
+                  <div className="text-yellow-400 text-sm font-mono mb-2">
+                    📱 BETA MODE - OTP DISPLAYED
+                  </div>
+                  <div className="text-yellow-400 text-sm font-mono mb-2">
+                    Our Twilio service is currently down and the app is in beta, so we are showing you the OTP.
+                  </div>
+                  <div className="text-white text-2xl font-mono font-bold">
+                    {displayOtp}
+                  </div>
+                  <div className="text-yellow-400 text-xs font-mono mt-2">
+                    Please login with this OTP
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-mono text-white mb-2">ENTER OTP</label>
                 <input

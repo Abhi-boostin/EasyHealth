@@ -14,18 +14,16 @@ const formatPhoneNumber = (phone) => {
 
 export const handleChat = async (req, res) => {
   try {
-    const { message, phone } = req.body;
+    const { message } = req.body;
     const file = req.file;
+    const userId = req.user.id; // Get user ID from JWT middleware
 
     if (!message && !file) {
       return res.status(400).json({ error: "Message or File is required" });
     }
 
-    // Format phone number to match database format
-    const formattedPhone = formatPhoneNumber(phone);
-    
-    // Fetch user by formatted phone to get location
-    const user = await User.findOne({ phone: formattedPhone });
+    // Fetch user by ID to get location
+    const user = await User.findById(userId);
     
     const locationInfo = user?.location
       ? `User is at ${user.location.address} (lat: ${user.location.latitude}, long: ${user.location.longitude}).`

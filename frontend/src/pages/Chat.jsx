@@ -82,16 +82,19 @@ export default function Chat() {
 
   const sendLocationToBackend = async (latitude, longitude, address) => {
     try {
-      const phone = localStorage.getItem("eh_user_phone");
-      if (!phone) {
+      const token = localStorage.getItem("eh_token");
+      if (!token) {
         return false;
       }
 
       const response = await api.post("/api/location", {
         latitude,
         longitude,
-        address,
-        phone
+        address
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
 
       return true;
@@ -119,13 +122,16 @@ export default function Chat() {
     setError("");
 
     try {
+      const token = localStorage.getItem("eh_token");
       const formData = new FormData();
       formData.append("message", userMsg.text);
-      formData.append("phone", localStorage.getItem("eh_user_phone"));
       if(mediaFile) formData.append("file", mediaFile);
 
       const { data } = await api.post("/api/chat/send", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { 
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
+        },
       });
 
       const botMsg = { 

@@ -1,29 +1,17 @@
 // controllers/locationController.js
 import User from "../models/User.js";
 
-// Phone number formatting function
-const formatPhoneNumber = (phone) => {
-  if (!phone) return null;
-  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
-  if (!cleaned.startsWith('+')) {
-    return `+91${cleaned}`;
-  }
-  return cleaned;
-};
-
 export const saveLocation = async (req, res) => {
   try {
-    const { latitude, longitude, address, phone } = req.body;
+    const { latitude, longitude, address } = req.body;
+    const userId = req.user.id; // Get user ID from JWT middleware
 
-    // Format phone number to match database format
-    const formattedPhone = formatPhoneNumber(phone);
-
-    if (!latitude || !longitude || !formattedPhone) {
-      return res.status(400).json({ error: "Latitude, longitude and phone are required" });
+    if (!latitude || !longitude) {
+      return res.status(400).json({ error: "Latitude and longitude are required" });
     }
 
-    const user = await User.findOneAndUpdate(
-      { phone: formattedPhone },
+    const user = await User.findByIdAndUpdate(
+      userId,
       {
         location: {
           latitude: parseFloat(latitude),
