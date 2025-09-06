@@ -5,16 +5,16 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
+
 dotenv.config();
 
-// MADE THE APP
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-// CONNECT WITH DATABASE
+// Connect to MongoDB
 mongoose
   .connect(process.env.ATLAS, {
     useNewUrlParser: true,
@@ -24,21 +24,33 @@ mongoose
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
-// test
-app.get("/api", (req, res) => {
-  res.json({ msg: "working" });
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    message: "EasyHealth API is running",
+    timestamp: new Date().toISOString()
+  });
 });
 
-// login api forwarding
+// API routes
 app.use("/api/user", authRoutes);
-
-//chat api forwarding
 app.use("/api/chat", chatRoutes);
-
-// location api forwarding
 app.use("/api/location", locationRoutes);
 
-// start server
+// 404 handler
+app.use("*", (req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

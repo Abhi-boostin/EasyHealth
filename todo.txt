@@ -1,2 +1,20 @@
 multiple images logic send array of images 
 currently we have only one image and one pdf
+
+
+express and cors setup still waiting
+
+// CORS configuration for production
+const corsOptions = {
+  origin: [
+    'https://easyhealth.netlify.app',
+    'https://your-frontend-domain.netlify.app',
+    'http://localhost:3000' // For local development
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
