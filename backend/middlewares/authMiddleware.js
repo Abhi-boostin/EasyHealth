@@ -16,7 +16,7 @@ export const authMiddleware = (req, res, next) => {
         return res.status(403).json({ error: "Invalid token" });
       }
 
-      // user ki info request ke saath attach kar dete hain
+      // Attach user info to request
       req.user = decoded;
       next();
     });

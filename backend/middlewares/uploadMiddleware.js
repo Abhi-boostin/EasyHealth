@@ -1,4 +1,5 @@
 import multer from "multer";
+
 const storage = multer.memoryStorage();
 
 const upload = multer({
@@ -7,9 +8,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // max 10MB (pdf thoda bada ho sakta)
   },
   fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype.startsWith("image/") || file.mimetype === "application/pdf"
-    ) {
+    if (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf") {
       cb(null, true);
     } else {
       cb(new Error("Only image or PDF files are allowed!"), false);

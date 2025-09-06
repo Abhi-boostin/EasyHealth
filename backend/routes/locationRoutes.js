@@ -5,7 +5,6 @@ import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Protected route - requires authentication
 router.post("/", authMiddleware, saveLocation);
 
 export default router; 
