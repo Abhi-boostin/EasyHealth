@@ -1,15 +1,22 @@
 // utils/pdfUtils.js
-import { pdfToPng } from "pdf-to-png-converter";
+import { fromBuffer } from "pdf2pic";
 
 export async function pdfToImages(pdfBuffer) {
-  const pngPages = await pdfToPng(pdfBuffer, {
-    viewportScale: 2, // quality
+  const convert = fromBuffer(pdfBuffer, {
+    density: 200, // DPI
+    saveFilename: "page",
+    savePath: "/tmp",
+    format: "png",
+    width: 2000,
+    height: 2000
   });
 
-  // Gemini ko jo format chahiye
-  return pngPages.map((page) => ({
+  const results = await convert.bulk(-1); // Convert all pages
+
+  // Convert to Gemini format
+  return results.map((result) => ({
     inlineData: {
-      data: page.content.toString("base64"),
+      data: result.buffer.toString("base64"),
       mimeType: "image/png",
     },
   }));

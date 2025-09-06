@@ -27,6 +27,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
-    "pdf-to-png-converter": "^1.0.1"
+    "pdf2pic": "^2.1.4"
   }
 }
