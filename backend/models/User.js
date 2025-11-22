@@ -15,12 +15,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    otp: {
-      type: String, // OTP hash yaha save hoga
-    },
-    otpExpiresAt: {
-      type: Date, // OTP expiry time
-    },
     location: {
       latitude: {
         type: Number,

@@ -10,7 +10,6 @@ export default function Register() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const [displayOtp, setDisplayOtp] = useState("");
   const navigate = useNavigate();
 
   const validatePhone = (phone) => {
@@ -45,8 +44,7 @@ export default function Register() {
         password 
       });
       setOtpSent(true);
-      setDisplayOtp(data.otp); // Store OTP to display
-      setMsg(data.message || "OTP sent successfully! Check the OTP below.");
+      setMsg(data.msg || "OTP sent to your phone number");
     } catch (error) {
       setErr(error?.response?.data?.msg || "Failed to send OTP");
     } finally {
@@ -144,20 +142,13 @@ export default function Register() {
             </form>
           ) : (
             <form onSubmit={verifyOtp} className="space-y-4">
-              {/* OTP Display Box */}
-              <div className="bg-yellow-900 border-2 border-yellow-400 p-4 mb-4">
+              <div className="bg-green-900 border-2 border-green-400 p-4 mb-4">
                 <div className="text-center">
-                  <div className="text-yellow-400 text-sm font-mono mb-2">
-                    📱 BETA MODE - OTP DISPLAYED
+                  <div className="text-green-400 text-sm font-mono">
+                    📱 OTP sent to {phone}
                   </div>
-                  <div className="text-yellow-400 text-sm font-mono mb-2">
-                    Our Twilio service is currently down and the app is in beta, so we are showing you the OTP.
-                  </div>
-                  <div className="text-white text-2xl font-mono font-bold">
-                    {displayOtp}
-                  </div>
-                  <div className="text-yellow-400 text-xs font-mono mt-2">
-                    Please login with this OTP
+                  <div className="text-green-400 text-xs font-mono mt-2">
+                    Please check your SMS messages
                   </div>
                 </div>
               </div>

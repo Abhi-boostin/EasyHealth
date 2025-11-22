@@ -8,7 +8,11 @@
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["healthcare", "ai", "chatbot"],
+  "keywords": [
+    "healthcare",
+    "ai",
+    "chatbot"
+  ],
   "author": "Your Name",
   "license": "ISC",
   "type": "module",
@@ -27,6 +31,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
-    "pdf2pic": "^2.1.4"
+    "pdf2pic": "^2.1.4",
+    "twilio": "^5.10.6"
   }
 }

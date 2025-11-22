@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
+import { sendOTP as sendTwilioOTP } from "../services/twilioService.js";
 
 // Phone number formatting function
 const formatPhoneNumber = (phone) => {
@@ -18,24 +19,36 @@ export const register = async (req, res) => {
     const { phone, password } = req.body;
     
     const formattedPhone = formatPhoneNumber(phone);
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = new Date(Date.now() + 5 * 60000); // 5 minutes
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ phone: formattedPhone });
+    if (existingUser) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
 
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Send OTP via Twilio
+    try {
+      await sendTwilioOTP(formattedPhone);
+    } catch (twilioError) {
+      console.error("Twilio Error:", twilioError);
+      return res.status(500).json({ 
+        msg: "Failed to send OTP. Please check your phone number." 
+      });
+    }
+
+    // Create user after OTP is sent successfully
     const user = await User.create({
       phone: formattedPhone,
       password: hashedPassword,
-      otp,
-      otpExpiresAt: otpExpiry,
       isVerified: false
     });
 
     res.status(201).json({ 
       success: true, 
-      msg: "OTP sent successfully", 
-      userId: user._id,
-      otp: otp, // Send OTP to frontend
-      message: "Our Twilio service is currently down and the app is in beta, so we are showing you the OTP. Please login with it."
+      msg: "OTP sent to your phone number", 
+      userId: user._id
     });
   } catch (error) {
     console.error("Register Error:", error.message);
@@ -56,17 +69,21 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ msg: "User already verified" });
     }
 
-    if (user.otpExpiresAt < new Date()) {
-      return res.status(400).json({ msg: "OTP expired" });
-    }
-
-    if (otp !== user.otp) {
-      return res.status(400).json({ msg: "Invalid OTP" });
+    // Verify OTP with Twilio
+    const { verifyOTP: verifyTwilioOTP } = await import("../services/twilioService.js");
+    
+    try {
+      const verification = await verifyTwilioOTP(formattedPhone, otp);
+      
+      if (!verification.success) {
+        return res.status(400).json({ msg: "Invalid or expired OTP" });
+      }
+    } catch (twilioError) {
+      console.error("Twilio Verification Error:", twilioError);
+      return res.status(400).json({ msg: "Invalid or expired OTP" });
     }
 
     user.isVerified = true;
-    user.otp = undefined;
-    user.otpExpiresAt = undefined;
     await user.save();
 
     res.json({ msg: "User verified successfully" });

@@ -12,8 +12,43 @@ export default function Chat() {
   const [locationPermission, setLocationPermission] = useState("pending");
   const [locationLoading, setLocationLoading] = useState(false);
 
-  // Show location popup when component mounts
+  // Show welcome message and location popup when component mounts
   useEffect(() => {
+    // Add welcome message
+    const welcomeMessage = {
+      role: "bot",
+      text: `Welcome to EasyHealth! 🏥
+
+I'm your AI health assistant. Here's how I can help you:
+
+📋 Upload Medical Reports
+• Send me your lab reports (blood tests, scans, etc.)
+• I accept images (JPG, PNG) and PDF files
+• I'll analyze them and explain the results in simple terms
+
+🔍 What I Do
+• Explain medical terminology in easy language
+• Highlight abnormal values and what they mean
+• Identify potential health risks
+• Suggest symptoms to watch for
+• Recommend nearby hospitals and doctors
+
+📍 Location Services
+• Share your location for personalized hospital recommendations
+• I'll suggest the best nearby doctors and clinics
+
+💬 Ask Questions
+• Feel free to ask about your health concerns
+• I'm here to help you understand your medical information
+
+⚠️ Important: I provide information to help you understand your reports, but I'm not a replacement for professional medical advice. Always consult with a doctor for diagnosis and treatment.
+
+Ready to get started? Upload a medical report or ask me a question!`,
+      id: "welcome-" + Date.now()
+    };
+    
+    setMessages([welcomeMessage]);
+
     // Check if user has already granted location permission
     const hasLocationPermission = localStorage.getItem("eh_location_granted");
     if (!hasLocationPermission) {
