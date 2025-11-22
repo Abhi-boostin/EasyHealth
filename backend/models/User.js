@@ -16,12 +16,13 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     location: {
-      latitude: {
-        type: Number,
-        required: false,
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
       },
-      longitude: {
-        type: Number,
+      coordinates: {
+        type: [Number], // [longitude, latitude]
         required: false,
       },
       address: {
@@ -30,12 +31,15 @@ const userSchema = new mongoose.Schema(
       },
       lastUpdated: {
         type: Date,
-        required: false,
+        default: Date.now
       }
     }
   },
   { timestamps: true }
 );
+
+// Create geospatial index for location-based queries
+userSchema.index({ location: '2dsphere' });
 
 const User = mongoose.model("User", userSchema);
 export default User;

@@ -2,20 +2,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
 
-// ⚡ Flash model
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-/**
- * userMessage: string - user's text input
- * imageBuffer: Buffer - single image file
- * mimeType: string - MIME type of single image
- * multipleImages: Array - for PDF pages or multiple image uploads [{ inlineData: { data, mimeType } }]
- * locationInfo: string - formatted user location to help suggest nearby hospitals
- */
 export async function getGeminiResponse(
   userMessage,
   imageBuffer = null,
@@ -24,9 +16,7 @@ export async function getGeminiResponse(
   locationInfo = "User location not provided"
 ) {
   try {
-    // Combine base instruction with location info
-    const baseInstruction = `
-You are EasyHealth AI, a trusted digital healthcare assistant.
+    const baseInstruction = `You are EasyHealth AI, a trusted digital healthcare assistant.
 
 **Your Role:**
 - Analyze user's medical files (blood reports, lab results, scans) and explain findings clearly.
@@ -45,56 +35,54 @@ ${locationInfo}
 - First explain the medical results in simple terms.
 - Then list 2-3 nearest hospitals/clinics based on the user's location with doctor & timings info.
 - Use bullets or numbered lists for clarity.
-- Example:
 
-Analysis:
-- Your blood sugar is high, which may indicate diabetes risk.
-- Your cholesterol levels are slightly elevated.
+**User Medical Message:** ${userMessage?.trim() || ""}`;
 
-Nearby Medical Assistance:
-1. Sunshine Hospital
-   - Doctor: Dr. Rahul Sharma (Endocrinologist)
-   - Timing: Mon-Fri 10am-5pm
-   - Contact: +91 9876543210
-   - Address: Muradnagar, Uttar Pradesh
-2. City Care Clinic
-   - Doctor: Dr. Priya Singh (General Physician)
-   - Timing: Mon-Sat 9am-6pm
-   - Contact: +91 9123456780
-   - Address: Muradnagar, Uttar Pradesh
-
-**User Medical Message:** ${userMessage?.trim() || ""}
-
-Assistant:
-`;
-
-    let result;
+    let contents;
 
     if (multipleImages.length > 0) {
-      // PDF pages or multiple images
-      result = await model.generateContent([
-        { text: baseInstruction },
-        ...multipleImages,
-      ]);
+      contents = [baseInstruction, ...multipleImages];
     } else if (imageBuffer && mimeType) {
-      // Single image
-      result = await model.generateContent([
-        { text: baseInstruction },
+      contents = [
+        baseInstruction,
         {
           inlineData: {
             data: imageBuffer.toString("base64"),
             mimeType,
           },
         },
-      ]);
+      ];
     } else {
-      // Text only
-      result = await model.generateContent(baseInstruction);
+      contents = baseInstruction;
     }
 
-    return result.response.text().trim();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: contents
+    });
+
+    return response.text.trim();
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    throw new Error("Failed to fetch response from Gemini");
+    console.error("Gemini API Error:", error.message);
+    console.error("Error stack:", error.stack);
+    throw new Error(`Gemini API failed: ${error.message}`);
+  }
+}
+
+export async function testGeminiAPI() {
+  try {
+    console.log("Testing Gemini API...");
+    console.log("API Key:", process.env.GEMINI_API_KEY ? "Present" : "Missing");
+    
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: "Say 'Hello, EasyHealth is working!' in one sentence."
+    });
+    
+    console.log("✅ Gemini API Test Success:", response.text);
+    return { success: true, response: response.text };
+  } catch (error) {
+    console.error("❌ Gemini API Test Failed:", error.message);
+    return { success: false, error: error.message };
   }
 }

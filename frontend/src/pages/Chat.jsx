@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import { Link } from "react-router-dom";
+import HospitalCard from "../components/HospitalCard";
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
@@ -11,9 +12,14 @@ export default function Chat() {
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [locationPermission, setLocationPermission] = useState("pending");
   const [locationLoading, setLocationLoading] = useState(false);
+  const [userPhone, setUserPhone] = useState("");
 
   // Show welcome message and location popup when component mounts
   useEffect(() => {
+    // Get user phone
+    const phone = localStorage.getItem("eh_user_phone");
+    setUserPhone(phone || "User");
+
     // Add welcome message
     const welcomeMessage = {
       role: "bot",
@@ -172,6 +178,7 @@ Ready to get started? Upload a medical report or ask me a question!`,
       const botMsg = { 
         role: "bot", 
         text: data?.botReply ?? "", 
+        hospitals: data?.hospitals || [],
         id: Date.now() + "b" 
       };
       setMessages((m) => [...m, botMsg]);
@@ -185,6 +192,14 @@ Ready to get started? Upload a medical report or ask me a question!`,
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) setMediaFile(file);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("eh_token");
+    localStorage.removeItem("eh_user_phone");
+    localStorage.removeItem("eh_user_id");
+    localStorage.removeItem("eh_location_granted");
+    window.location.href = "/login";
   };
 
   return (
@@ -242,9 +257,12 @@ Ready to get started? Upload a medical report or ask me a question!`,
           {locationPermission === "error" && (
             <span className="text-yellow-400 text-sm font-mono">📍 Location Error</span>
           )}
-          <Link to="/" className="text-white font-mono hover:text-gray-300 transition-colors">
-            ← BACK
-          </Link>
+          <button 
+            onClick={handleLogout}
+            className="text-white font-mono hover:text-red-400 transition-colors"
+          >
+            LOGOUT
+          </button>
         </div>
       </header>
 
@@ -272,6 +290,18 @@ Ready to get started? Upload a medical report or ask me a question!`,
                   <p className="whitespace-pre-wrap leading-relaxed font-mono">{m.text}</p>
                 )}
               </div>
+              
+              {/* Display hospitals if available */}
+              {m.hospitals && m.hospitals.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-white font-mono font-bold text-lg mb-3">
+                    🏥 Nearby Hospitals & Clinics
+                  </h3>
+                  {m.hospitals.map((hospital, index) => (
+                    <HospitalCard key={hospital.placeId} hospital={hospital} index={index} />
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}

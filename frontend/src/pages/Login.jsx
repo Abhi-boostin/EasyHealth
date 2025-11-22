@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -8,6 +8,14 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("eh_token");
+    if (token) {
+      navigate("/chat", { replace: true });
+    }
+  }, [navigate]);
 
   const submit = async (e) => {
     e.preventDefault();

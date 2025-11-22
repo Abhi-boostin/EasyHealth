@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -11,6 +11,14 @@ export default function Register() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("eh_token");
+    if (token) {
+      navigate("/chat", { replace: true });
+    }
+  }, [navigate]);
 
   const validatePhone = (phone) => {
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
@@ -79,13 +87,23 @@ export default function Register() {
       });
       setMsg(data?.msg || "OTP verified successfully!");
       
-      // Store user data for chat
-      localStorage.setItem("eh_user_phone", formattedPhone);
-      localStorage.setItem("eh_user_password", password);
-      
-      // Redirect to chat after a short delay
-      setTimeout(() => {
-        navigate("/chat");
+      // Auto-login after verification
+      setTimeout(async () => {
+        try {
+          const loginData = await api.post("/api/user/login", { 
+            phone: formattedPhone, 
+            password 
+          });
+          
+          localStorage.setItem("eh_token", loginData.data.token);
+          localStorage.setItem("eh_user_phone", loginData.data.user.phone);
+          localStorage.setItem("eh_user_id", loginData.data.user.id);
+          
+          navigate("/chat");
+        } catch (loginError) {
+          console.error("Auto-login failed:", loginError);
+          navigate("/login");
+        }
       }, 1500);
       
     } catch (error) {
